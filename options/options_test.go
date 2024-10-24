@@ -49,24 +49,26 @@ func TestApply(t *testing.T) {
 	t.Run("Test nil config", func(t *testing.T) {
 		var nilConfig *config
 		assert.NotPanics(t, func() { options.Apply(nilConfig, nil) })
+		assert.NotPanics(t, func() { options.Apply(nilConfig, options.WithFn[config](nil)) })
 		assert.NotPanics(t, func() { options.Apply(nilConfig, WithVerbose(true)) })
 	})
 
 	t.Run("Test config", func(t *testing.T) {
-		var config config
-		assert.NotPanics(t, func() { options.Apply(&config, nil) })
-		options.Apply(&config, WithVerbose(true))
-		assert.True(t, config.Verbose)
-		assert.NotPanics(t, func() { options.Apply(&config, nil, WithVerbose(false), nil) })
-		assert.False(t, config.Verbose)
+		var cfg config
+		assert.NotPanics(t, func() { options.Apply(&cfg, nil) })
+		assert.NotPanics(t, func() { options.Apply(&cfg, options.WithFn[config](nil)) })
+		options.Apply(&cfg, WithVerbose(true))
+		assert.True(t, cfg.Verbose)
+		assert.NotPanics(t, func() { options.Apply(&cfg, nil, WithVerbose(false), nil) })
+		assert.False(t, cfg.Verbose)
 	})
 
 	t.Run("Test config with struct opt", func(t *testing.T) {
-		var config config
-		options.Apply(&config, WithStructOpt("a", "b"))
-		assert.Equal(t, []string{"a", "b"}, config.Values)
-		options.Apply(&config, WithStructPtrOpt("c", "d"))
-		assert.Equal(t, []string{"a", "b", "c", "d"}, config.Values)
+		var cfg config
+		options.Apply(&cfg, WithStructOpt("a", "b"))
+		assert.Equal(t, []string{"a", "b"}, cfg.Values)
+		options.Apply(&cfg, WithStructPtrOpt("c", "d"))
+		assert.Equal(t, []string{"a", "b", "c", "d"}, cfg.Values)
 	})
 }
 
