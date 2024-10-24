@@ -72,61 +72,15 @@ func TestApply(t *testing.T) {
 	})
 }
 
-// --------------------------------------------
-
-type configWithDefault struct {
-	Values []string
-}
-
-func (c *configWithDefault) SetDefault() {
-	c.Values = []string{"default"}
-}
-
-// --------------------------------------------
-
-type configWithValidate struct {
-	err error
-}
-
-func (c *configWithValidate) Validate() error {
-	return c.err
-}
-
 func TestNew(t *testing.T) {
 	t.Run("Test new any", func(t *testing.T) {
-		result, err := options.New[any]()
+		var result = options.New[any]()
 		assert.NotNil(t, result)
-		assert.NoError(t, err)
 	})
 
 	t.Run("Test new config", func(t *testing.T) {
-		result, err := options.New(WithVerbose(true))
+		var result = options.New(WithVerbose(true))
 		assert.NotNil(t, result)
 		assert.EqualValues(t, true, result.Verbose)
-		assert.NoError(t, err)
-	})
-
-	t.Run("Test new config with default", func(t *testing.T) {
-		var appender = func(args ...string) options.WithFn[configWithDefault] {
-			return func(c *configWithDefault) { c.Values = append(c.Values, args...) }
-		}
-		result, err := options.New(appender("foo", "bar"))
-		assert.NotNil(t, result)
-		assert.EqualValues(t, []string{"default", "foo", "bar"}, result.Values)
-		assert.NoError(t, err)
-	})
-
-	var setValidateErr = func(err error) options.WithFn[configWithValidate] {
-		return func(c *configWithValidate) { c.err = err }
-	}
-	t.Run("Test new config with validate no error", func(t *testing.T) {
-		result, err := options.New(setValidateErr(nil))
-		assert.NotNil(t, result)
-		assert.NoError(t, err)
-	})
-	t.Run("Test new config with validate with error", func(t *testing.T) {
-		result, err := options.New(setValidateErr(assert.AnError))
-		assert.Nil(t, result)
-		assert.EqualError(t, err, assert.AnError.Error())
 	})
 }
