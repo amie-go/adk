@@ -26,3 +26,6 @@ go.work.sum
 
 # report files
 .reports
+
+# User local data
+.local
