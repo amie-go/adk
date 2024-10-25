@@ -2,13 +2,13 @@
 
 This package allows you to implement the functional options pattern in your packages.
 
-## Usage
+# Usage
 
-### Package creator side
+## Package creator side
 
-#### 1 - Define your project configuration
+### 1 - Define your project configuration
 
-A good practice is to define the settings of your project as **private**.
+A good practice is to define the configuration of your project as **private**.
 
 ```go
 // Example of private configuration defined in any file of your project
@@ -20,64 +20,74 @@ type settings struct {
 
 // Example of private configuration defined in a file internal/settings.go of your project
 type Settings struct {
-	Name string
+	Name 	string
+	Cities	[]string
     //...
 }
 ```
 
-#### 2 - Define public configuration function
+### 2 - Provide public configuration function
 
-You can create simple configuration function.
+You can provide configuration function based on:
 
-```go
-func WithSuffix(suffix string) options.WithFn[settings] {
-	return func(dst *settings) { dst.Name += suffix }
-}
-```
+- simple function.<br>
+  ```go
+  func WithSuffix(suffix string) options.WithFn[settings] {
+  	return func(dst *settings) { dst.Name += suffix }
+  }
+  ```
 
-And same more complex configuration function.
+- structure that implements interface `options.With`.<br>
+  ```go
+  func WithCities(values ...string) options.With[settings] {
+  	return cities(values)
+  }
 
-```go
-func WithCities(values ...string) options.With[settings] {
-	return cities(values)
-}
+  type cities []string
 
-type cities []string
+  func (obj cities) Apply(dst *settings) { dst.Cities = append(dst.Cities, obj...) }
+  ```
 
-func (obj cities) Apply(dst *settings) { dst.Cities = append(dst.Cities, obj...) }
-```
+### 3 - Generate the configuration
 
-#### 3 - Generate the configuration
+You can get your configuration applied by using function:
 
-You can modify your configuration by applying the configuration functions.
-```go
-	// Create your settings structure with some default values
-	var config = &settings{
-		Name: "foo"
-	}
-	// Apply options on your settings structure
-	options.Apply(config, opts...)
-```
+- **Apply**.<br>
+  ```go
+  	// Create your configuration with some default values
+  	var config = &settings{
+  		Name: "foo"
+  	}
+  	// Apply options on your configuration
+  	options.Apply(config, opts...)
+  ```
 
-You can also directly generate the configuration with configuration functions applied.
+- **New**.<br>
+  ```go
+  	// Generate your configuration with provided options applied to it
+  	var config = options.New(opts...)
+  ```
 
-```go
-	// Generate your settings structure with provided options applied to it
-	config, err := options.New(opts...)
-```
+- **NewWithDefaults**.<br>
+  ```go
+  	// Define a private option functions to set default values
+  	func setDefault(o *settingsDef) {
+  		o.Name = "foo"
+  		o.Cities = []string{"Paris", "London"}
+  	}
+  
+  	// Generate your configuration with provided options applied to it
+  	var config = options.NewWithDefaults(setDefault, opts...)
+  ```
 
 > [!TIP]
-> `New` calls (if exists) the functions from your configuration structure:
-> - `SetDefault()` in first to init default values (before applying configuration functions).
-> - `Validate() error` in last to do validation of your configuration (after applying configuration functions).
+> Calling `options.NewWithDefaults(nil, opts...)` will call (if it exists) the `SetDefaults()` function of your configuration structure.
 
-A good practice is to create a *New* instance creator function in your package, and generates the configuration as above.
+A good practice is to create a **New** instance creation function in your package and generate the configuration using one of the methods above.
 
 ```go
 func New(opts ...options.With[settings]) *MyClass {
-	// Generate your settings structure with provided options applied to it
-	config, _ := options.New(opts...)
-	return &MyClass{config: config}
+	return &MyClass{config: options.New(opts...)}
 }
 
 type MyClass struct {
@@ -85,7 +95,7 @@ type MyClass struct {
 }
 ```
 
-### User side
+## User side
 
 ```go
 func foo() {
