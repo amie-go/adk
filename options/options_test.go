@@ -1,6 +1,7 @@
 package options_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/amie-go/adk/options"
@@ -29,7 +30,7 @@ func WithStructOpt(someValues ...string) options.With[config] {
 
 type structOpt []string
 
-func (obj structOpt) Apply(c *config) { c.Values = append(c.Values, obj...) }
+func (obj structOpt) Apply(ctx context.Context, c *config) { c.Values = append(c.Values, obj...) }
 
 // --------------------------------------------
 
@@ -41,7 +42,9 @@ type structPtrOpt struct {
 	values []string
 }
 
-func (obj *structPtrOpt) Apply(c *config) { c.Values = append(c.Values, obj.values...) }
+func (obj *structPtrOpt) Apply(ctx context.Context, c *config) {
+	c.Values = append(c.Values, obj.values...)
+}
 
 // --------------------------------------------
 

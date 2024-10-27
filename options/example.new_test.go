@@ -1,6 +1,8 @@
 package options_test
 
 import (
+	"context"
+
 	"github.com/amie-go/adk/options"
 )
 
@@ -25,7 +27,7 @@ func WithCities(values ...string) options.With[settings] {
 
 type cities []string
 
-func (obj cities) Apply(dst *settings) { dst.Cities = append(dst.Cities, obj...) }
+func (obj cities) Apply(ctx context.Context, dst *settings) { dst.Cities = append(dst.Cities, obj...) }
 
 // --------------------------------------------
 // Package creator: Define your constructor function
