@@ -4,16 +4,10 @@ import "context"
 
 // NewWithDefaults creates a new instance of the configuration, applies the default values to it,
 // and applies the options to it.
-func NewWithDefaults[T any](setDefaultFn func(*T), opts ...With[T]) *T {
-	return NewCtxWithDefaults(context.Background(), setDefaultFn, opts...)
-}
-
-// NewCtxWithDefaults creates a new instance of the configuration, applies the default values to it,
-// and applies the options to it.
-func NewCtxWithDefaults[T any](ctx context.Context, setDefaultFn func(*T), opts ...With[T]) *T {
+func NewWithDefaults[T any](ctx context.Context, setDefaultFn func(*T), opts ...With[T]) *T {
 	var config = new(T)
-	ApplyCtx(ctx, config, SetDefaults(setDefaultFn))
-	ApplyCtx(ctx, config, opts...)
+	Apply(ctx, config, SetDefaults(setDefaultFn))
+	Apply(ctx, config, opts...)
 	return config
 }
 

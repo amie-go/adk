@@ -1,6 +1,8 @@
 package options_test
 
 import (
+	"context"
+
 	"github.com/amie-go/adk/options"
 )
 
@@ -30,8 +32,8 @@ func WithCity(value string) options.WithFn[settingsDef] {
 // Package creator: Define your constructor function
 
 func NewMyClass2(opts ...options.With[settingsDef]) *MyClass2 {
-	//var config = options.New(append([]options.With[settingsDef]{options.SetDefaults(setDefault)}, opts...)...)
-	var config = options.NewWithDefaults(setDefault, opts...)
+	//var config = options.New(context.Background(), append([]options.With[settingsDef]{options.SetDefaults(setDefault)}, opts...)...)
+	var config = options.NewWithDefaults(context.Background(), setDefault, opts...)
 
 	return &MyClass2{config: config}
 }

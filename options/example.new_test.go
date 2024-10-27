@@ -37,7 +37,7 @@ func NewMyClass(opts ...options.With[settings]) *MyClass {
 	var result = MyClass{config: settings{
 		Name: "foo",
 	}}
-	options.Apply(&result.config, opts...)
+	options.Apply(context.Background(), &result.config, opts...)
 	return &result
 }
 
