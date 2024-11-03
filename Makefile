@@ -18,12 +18,11 @@ generate: download ## Generate code
 	@echo "Generating code..."
 	@go generate ./...
 
-test: generate ## Run tests
+tests: generate ## Run tests
 	@echo "Running tests..."
-	@mkdir -p .reports
 	@go test ./... -coverpkg=./...
 
-test-coverage: generate ## Run tests and generate coverage report
+tests-coverage: generate ## Run tests and generate coverage report
 	@echo "Running tests with coverage..."
 	@mkdir -p .reports
 	@go test -v ./... -coverpkg=./... -coverprofile=$(REPORT_COVERAGE) -json ./... 2>&1 | tee $(REPORT_TESTS)

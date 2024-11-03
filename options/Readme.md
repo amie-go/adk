@@ -44,46 +44,16 @@ You can provide configuration function based on:
   }
 
   type cities []string
-
-  func (obj cities) Apply(dst *settings) { dst.Cities = append(dst.Cities, obj...) }
-  ```
-
-### 3 - Generate the configuration
-
-You can get your configuration applied by using function:
-
-- **Apply**.<br>
-  ```go
-  	// Create your configuration with some default values
-  	var config = &settings{
-  		Name: "foo"
-  	}
-  	// Apply options on your configuration
-  	options.Apply(config, opts...)
-  ```
-
-- **New**.<br>
-  ```go
-  	// Generate your configuration with provided options applied to it
-  	var config = options.New(opts...)
-  ```
-
-- **NewWithDefaults**.<br>
-  ```go
-  	// Define a private option functions to set default values
-  	func setDefault(o *settingsDef) {
-  		o.Name = "foo"
-  		o.Cities = []string{"Paris", "London"}
-  	}
   
-  	// Generate your configuration with provided options applied to it
-  	var config = options.NewWithDefaults(setDefault, opts...)
+  func (obj cities) Apply(ctx context.Context, dst *settings) { dst.Cities = append(dst.Cities, obj...) }
   ```
 
 > [!TIP]
-> Calling `options.NewWithDefaults(nil, opts...)` will call (if it exists) the `SetDefaults()` function of your configuration structure.
+> For simple function with `context.Context` argument, you can use `options.WithCtxFn`.
 
-A good practice is to create a **New** instance creation function in your package and generate the configuration using one of the methods above.
+### 3 - Generate the configuration
+
+A good practice is to create a `New` instance creation function in your package and generate the configuration using one of the methods above.
 
 ```go
 func New(opts ...options.With[settings]) *MyClass {
@@ -95,10 +65,44 @@ type MyClass struct {
 }
 ```
 
+You can get your configuration applied by using function:
+
+- `Apply`.<br>
+  ```go
+  	// Create your configuration with some default values
+  	var config = &settings{
+  		Name: "foo"
+  	}
+  	// Apply options on your configuration
+  	options.Apply(context.Background(), config, opts...)
+  ```
+
+- `New`.<br>
+  ```go
+  	// Generate your configuration with provided options applied to it
+  	var config = options.New(context.Background(), opts...)
+  ```
+
+- `NewWithDefaults`.<br>
+  ```go
+  	// Define a private option functions to set default values
+  	func setDefault(o *settingsDef) {
+  		o.Name = "foo"
+  		o.Cities = []string{"Paris", "London"}
+  	}
+  
+  	// Generate your configuration with provided options applied to it
+  	var config = options.NewWithDefaults(context.Background(), setDefault, opts...)
+  ```
+
+> [!TIP]
+> Calling `options.NewWithDefaults(context.Background(), nil, opts...)` will call (if it exists) the `SetDefaults()` function of your configuration structure.
+
 ## User side
 
 ```go
-func foo() {
-	var client = foo.New(foo.WithSuffix("foo"), foo.WithCities("London", "Paris"))
+func baz() {
+	var ctx = context.Background()
+	var client = foo.New(ctx, foo.WithSuffix("bar"), foo.WithCities("London", "Paris"))
 }
 ```
