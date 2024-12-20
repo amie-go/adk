@@ -1,0 +1,74 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      skip-tests:
+        description: 'Execute tests'
+        required: true
+        default: false
+        type: boolean
+
+env:
+  # Go compiler
+  CGO_ENABLED: 0
+  # Workflow options
+  DO_TESTS: ${{ github.event.inputs.skip-tests != true }}
+  # Sonar
+  SONAR_HOST_URL: https://sonarcloud.io
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  all:
+    name: Test, Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      # Setup source code
+      - uses: actions/checkout@v4
+        with:
+          # Disabling shallow clone is recommended for improving relevancy of reporting
+          fetch-depth: 0
+
+      # Setup GO
+      - name: 'Setup Go: Install'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      # Test and build
+      - name: 'Build binary: Download dependencies'
+        run: make download
+      - name: 'Build binary: Generate pseudo code'
+        run: make generate
+      - name: 'Build binary: Vet'
+        if: ${{ env.DO_TESTS }}
+        run: go vet ./...
+      - name: 'Build binary: Test and coverage'
+        if: ${{ env.DO_TESTS }}
+        run: make tests-coverage
+
+      # Code quality
+      - name: 'Code quality: Setup SonarQube'
+        if: ${{ env.DO_TESTS }}
+        uses: warchant/setup-sonar-scanner@v8
+        with:
+          version: " 5.0.1.3006"
+      - name: 'Code quality: Cache SonarQube packages'
+        if: ${{ env.DO_TESTS }}
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+      - name: 'Code quality: Run SonarQube'
+        if: ${{ env.DO_TESTS }}
+        run: sonar-scanner
+          -Dsonar.host.url=${{ env.SONAR_HOST_URL }}
+          -Dsonar.token=${{ secrets.SONAR_TOKEN }}
