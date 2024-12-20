@@ -53,7 +53,7 @@ jobs:
         run: go vet ./...
       - name: 'Build binary: Test and coverage'
         if: ${{ env.DO_TESTS }}
-        run: make test-coverage
+        run: make tests-coverage
 
       # Code quality
       - name: 'Code quality: Setup SonarQube'
