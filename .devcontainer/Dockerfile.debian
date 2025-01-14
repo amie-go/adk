@@ -1,0 +1,23 @@
+# Global ARGs
+ARG GO_VERSION=1.22.7
+ARG DISTRIB=bullseye
+
+FROM golang:${GO_VERSION}-${DISTRIB}
+
+RUN apt update
+#RUN apt install -y unzip
+
+# Go setup
+ENV CGO_ENABLED=0
+RUN go mod download || true
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
+
+# docker install
+#RUN mkdir /etc/apt/keyrings
+#RUN curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+#RUN echo \
+#	"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+#	$(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+#	tee /etc/apt/sources.list.d/docker.list > /dev/null
+#RUN apt update
+#RUN apt install -y docker-ce-cli

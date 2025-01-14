@@ -1,0 +1,16 @@
+# Global ARGs
+ARG GO_VERSION=1.22.7
+ARG DISTRIB=alpine
+
+FROM golang:${GO_VERSION}-${DISTRIB}
+
+RUN apk update
+RUN apk add git openssh
+
+# Go setup
+ENV CGO_ENABLED=0
+RUN go mod download || true
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
+
+# docker install
+#RUN apk add docker

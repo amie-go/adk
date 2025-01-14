@@ -1,0 +1,46 @@
+// https://containers.dev/implementors/json_reference
+
+// https://code.visualstudio.com/remote/advancedcontainers/use-docker-kubernetes
+// https://code.visualstudio.com/remote/advancedcontainers/environment-variables#_option-2-use-an-env-file
+
+{
+	"name": "Go devcontainer",
+	
+	"build": {
+		// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
+		"dockerfile": "Dockerfile.debian",
+		// Sets the run context to one level up instead of the .devcontainer folder.
+		"context": ".",
+		"args": {"GO_VERSION": "1.22.7"}
+	},
+	
+	// Uncomment when using a ptrace-based debugger like C++, Go, and Rust
+	//"runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
+	"capAdd": ["SYS_PTRACE"],
+	"securityOpt": ["seccomp=unconfined"],
+	
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	"forwardPorts": [],
+	
+	// Uncomment the next line to run commands after the container is created - for example installing curl.
+	// "postCreateCommand": "apt-get update && apt-get install -y curl",
+	
+	// Uncomment to use the Docker CLI from inside the container. See https://aka.ms/vscode-remote/samples/docker-from-docker.
+	//"mounts": [ "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind" ],
+
+	// https://containers.dev/features
+	"features": {},
+
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"golang.Go"
+			]
+		}
+	}
+
+	// Uncomment to connect as a non-root user if you've added one. See https://aka.ms/vscode-remote/containers/non-root.
+	// "remoteUser": "vscode"
+}
