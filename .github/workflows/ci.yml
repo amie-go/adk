@@ -58,7 +58,7 @@ jobs:
       # Code quality
       - name: 'Code quality: Setup SonarQube'
         if: ${{ env.DO_TESTS }}
-        uses: warchant/setup-sonar-scanner@v8
+        uses: warchant/setup-sonar-scanner@v9
         with:
           version: " 5.0.1.3006"
       - name: 'Code quality: Cache SonarQube packages'
