@@ -1,6 +1,6 @@
 module github.com/amie-go/adk
 
-go 1.22.7
+go 1.23.0
 
 require github.com/stretchr/testify v1.10.0
 

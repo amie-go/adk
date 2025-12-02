@@ -29,3 +29,5 @@ go.work.sum
 
 # User local data
 .local
+
+ex*
