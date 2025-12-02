@@ -12,21 +12,21 @@ func Log(err error) {
 }
 
 func LogCtx(ctx context.Context, err error) {
-	LogWithAttrCtx(ctx, err, LogMetadataAttrs, LogStackTraceAttrs("stacktrace", nil))
+	LogWithAttrCtx(ctx, err, AttrsFromMetadata, AttrsFromStackTrace("stacktrace", nil))
 }
-
-type FilterFn func(error) []slog.Attr
 
 // -> Can filter on some type and not other...
 // -> LogCtx(ctx, err, MetadataAttrs, StackTraceAttrs("stacktrace"))
 // -> LogCtx(ctx, err, GetLogAttrs)
-func LogWithAttrCtx(ctx context.Context, err error, filterFns ...FilterFn) {
+func LogWithAttrCtx(ctx context.Context, err error, fns ...AttrsFn) {
 	if err != nil {
-		slog.LogAttrs(ctx, slog.LevelError, err.Error(), FiltersApply(err, filterFns...)...)
+		slog.LogAttrs(ctx, slog.LevelError, err.Error(), AttrsAppender(err, fns...)...)
 	}
 }
 
-func FiltersApply(err error, filterFns ...FilterFn) (attrs []slog.Attr) {
+type AttrsFn func(error) []slog.Attr
+
+func AttrsAppender(err error, filterFns ...AttrsFn) (attrs []slog.Attr) {
 	for _, v := range filterFns {
 		if v != nil {
 			attrs = append(attrs, v(err)...)
@@ -37,16 +37,16 @@ func FiltersApply(err error, filterFns ...FilterFn) (attrs []slog.Attr) {
 
 // ---------------------------------------------------------
 
-// LogMetadataAttrs returns the metadata of the error as slog attributes.
-func LogMetadataAttrs(err error) (attrs []slog.Attr) {
+// AttrsFromMetadata returns the metadata of the error as slog attributes.
+func AttrsFromMetadata(err error) (attrs []slog.Attr) {
 	for _, v := range GetMetadata(err) {
 		attrs = append(attrs, slog.Any(v.Key, v.Value))
 	}
 	return
 }
 
-// LogStackTraceAttrs returns the stack trace of the error as slog attributes.
-func LogStackTraceAttrs(key string, format func([]runtime.Frame) any) FilterFn {
+// AttrsFromStackTrace returns the stack trace of the error as slog attributes.
+func AttrsFromStackTrace(key string, format func([]runtime.Frame) any) AttrsFn {
 	var fn = format
 	if fn == nil {
 		fn = stackFrameToLogSource
@@ -73,7 +73,8 @@ func stackFrameToLogSource(stack []runtime.Frame) any {
 	return result
 }
 
-func GetLogAttrs(errToBrowse error) (attrs []slog.Attr) {
+// Attrs returns the common attributes of the error as slog attributes.
+func Attrs(errToBrowse error) (attrs []slog.Attr) {
 	for err := errToBrowse; err != nil; err = errors.Unwrap(err) {
 		if castedErr, ok := err.(interface{ GetLogAttr() slog.Attr }); ok {
 			attrs = append(attrs, castedErr.GetLogAttr())

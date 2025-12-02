@@ -5,18 +5,36 @@ import (
 	"errors"
 	"runtime"
 
-	"github.com/amie-go/adk/common"
 	"github.com/amie-go/adk/options"
+	"github.com/amie-go/adk/xruntime"
 )
 
 // WithStackTrace returns a decorator that adds a stack trace to the error.
-func WithStackTrace(opts ...options.With[stackTraceConfig]) func(error) error {
+func WithStackTraceOld(opts ...options.With[stackTraceConfig]) func(error) error {
 	var config = options.NewWithDefaults(context.Background(), setDefaults, opts...)
 	return func(err error) error {
 		return &stackTraceError{
 			inner:       err,
-			stackFrames: config.generateFn(2+config.skip, config.maxDepth),
+			stackFrames: config.generateFn(config.skip, config.maxDepth),
 		}
+	}
+}
+
+func WithStackTrace(opts ...options.With[stackTraceConfig]) func(error) error {
+	var config = options.NewWithDefaults(context.Background(), setDefaults, opts...)
+	return func(err error) error {
+		// add 1 to skip the current function
+		var frames = config.generateFn(1+config.skip, config.maxDepth)
+		// check if first frame is the current function
+		if len(frames) > 0 && frames[0].Function == "github.com/amie-go/adk/errors.WithStackTrace.func1" {
+			frames = frames[1:]
+		}
+		// remove decorator new function it is next function
+		if len(frames) > 0 && frames[0].Function == "github.com/amie-go/adk/errors.New" {
+			frames = frames[1:]
+		}
+
+		return &stackTraceError{inner: err, stackFrames: frames}
 	}
 }
 
@@ -51,35 +69,29 @@ func (e stackTraceError) Unwrap() error {
 // ---------------------------------------------------------
 // WithOptions
 
+type StackGenerator func(uint32, uint32) []runtime.Frame
+
 type stackTraceConfig struct {
-	skip       int
-	maxDepth   int
-	generateFn func(int, int) []runtime.Frame
+	skip       uint32
+	maxDepth   uint32
+	generateFn StackGenerator
 }
 
 func setDefaults(dst *stackTraceConfig) {
 	dst.skip = 0
-	dst.maxDepth = common.MaxStackDepth
-	dst.generateFn = common.NewStackTrace
+	dst.maxDepth = xruntime.MaxStackDepth
+	dst.generateFn = xruntime.NewStackTrace
 }
 
-func WithSkip(value int) options.WithFn[stackTraceConfig] {
-	return func(dst *stackTraceConfig) {
-		if value >= 0 {
-			dst.skip = value
-		}
-	}
+func WithSkip(value uint32) options.WithFn[stackTraceConfig] {
+	return func(dst *stackTraceConfig) { dst.skip = value }
 }
 
-func WithMaxDepth(value int) options.WithFn[stackTraceConfig] {
-	return func(dst *stackTraceConfig) {
-		if value >= 0 {
-			dst.maxDepth = value
-		}
-	}
+func WithMaxDepth(value uint32) options.WithFn[stackTraceConfig] {
+	return func(dst *stackTraceConfig) { dst.maxDepth = value }
 }
 
-func WithFramesGenerator(fn func(int, int) []runtime.Frame) options.WithFn[stackTraceConfig] {
+func WithFramesGenerator(fn StackGenerator) options.WithFn[stackTraceConfig] {
 	return func(dst *stackTraceConfig) {
 		if fn != nil {
 			dst.generateFn = fn

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	exterr "github.com/amie-go/adk/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 // Article:
@@ -41,6 +42,8 @@ func TestDecorate(t *testing.T) {
 
 	slog.SetDefault(logger)
 
+	var ctx = context.Background()
+
 	var fn = func() {
 		err := exterr.New(ErrNotFound, WithStackTraceCustom, exterr.WithMetadata(exterr.KV{"foo", "bar"}))
 		err = exterr.New(err, exterr.WithMetadata(exterr.KV{"foo2", "bar2"}))
@@ -48,7 +51,7 @@ func TestDecorate(t *testing.T) {
 		slog.Info("slog info msg", "err", err)
 		exterr.Log(err)
 
-		exterr.LogWithAttrCtx(context.Background(), err, exterr.GetLogAttrs)
+		exterr.LogWithAttrCtx(ctx, err, exterr.Attrs)
 
 		info, ok := debug.ReadBuildInfo()
 		fmt.Println(ok)
@@ -56,4 +59,61 @@ func TestDecorate(t *testing.T) {
 	}
 
 	fn()
+
+	var fn2 = func() {
+		err := exterr.WithMetadata(exterr.KV{"foo", "bar"})(WithStackTraceCustom(ErrNotAuthenticated))
+		slog.LogAttrs(ctx, slog.LevelError, err.Error(),
+			exterr.AttrsAppender(err,
+				exterr.AttrsFromMetadata,
+				exterr.AttrsFromStackTrace("stacktrace", nil),
+			)...,
+		)
+	}
+
+	fn2()
+}
+
+func TestErrNotModified(t *testing.T) {
+	// Create an error
+	var errNotFound = errors.New("not found")
+	// Decorate that error
+	var err = exterr.New(errNotFound, exterr.WithStackTrace())
+	if assert.NotNil(t, err) {
+		// Check that the error is decorated
+		assert.ErrorIs(t, err, errNotFound)
+		// Check that input pointer error is not modified
+		assert.NotEqual(t, err, errNotFound)
+	}
+
+	// IsDecorated(err)
+	// GetDecorations(err)
+}
+
+func TestWithStackTrace(t *testing.T) {
+	t.Run("WithStackTrace with New", func(t *testing.T) {
+		var err = exterr.New(ErrNotFound, exterr.WithStackTrace())
+		var frames = exterr.GetStackTrace(err)
+		if assert.NotEmpty(t, frames) {
+			assert.Equal(t, "github.com/amie-go/adk/errors_test.TestWithStackTrace.func1", frames[0].Function)
+		}
+	})
+
+	t.Run("WithStackTrace with wrap error", func(t *testing.T) {
+		var err = exterr.WithStackTrace()(ErrNotFound)
+		var frames = exterr.GetStackTrace(err)
+		exterr.GetStackTrace(err)
+		if assert.NotEmpty(t, frames) {
+			assert.Equal(t, "github.com/amie-go/adk/errors_test.TestWithStackTrace.func2", frames[0].Function)
+		}
+	})
+
+	t.Run("WithStackTrace custom with wrap error", func(t *testing.T) {
+		var WithStackTraceCustom = exterr.WithStackTrace()
+
+		var err = WithStackTraceCustom(ErrNotFound)
+		var frames = exterr.GetStackTrace(err)
+		if assert.NotEmpty(t, frames) {
+			assert.Equal(t, "github.com/amie-go/adk/errors_test.TestWithStackTrace.func3", frames[0].Function)
+		}
+	})
 }
