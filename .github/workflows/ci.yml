@@ -63,7 +63,7 @@ jobs:
           version: " 5.0.1.3006"
       - name: 'Code quality: Cache SonarQube packages'
         if: ${{ env.DO_TESTS }}
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
